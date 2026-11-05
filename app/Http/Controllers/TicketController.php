@@ -9,6 +9,7 @@ use App\Http\Requests\StoreTicketRequest;
 use App\Models\Category;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\TicketAttachmentStorage;
 use App\Services\TicketWorkflow;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -82,34 +83,36 @@ class TicketController extends Controller
         ]);
     }
 
-    public function store(StoreTicketRequest $request, TicketWorkflow $workflow): RedirectResponse
-    {
-        $user = $request->user();
+    public function store(StoreTicketRequest $request, TicketWorkflow $workflow, TicketAttachmentStorage $attachments): RedirectResponse // <- 1: tambah parameter
+{
+    $user = $request->user();
 
-        // Nomor tiket unik di database. Jika dua tiket dibuat bersamaan dan
-        // nomornya bentrok, ulangi dengan nomor berikutnya.
-        $ticket = retry(
-            3,
-            fn () => DB::transaction(function () use ($request, $user, $workflow) {
-                $ticket = new Ticket($request->validated());
-                $ticket->user_id = $user->id;
-                $ticket->save();
+    // Nomor tiket unik di database. Jika dua tiket dibuat bersamaan dan
+    // nomornya bentrok, ulangi dengan nomor berikutnya.
+    $ticket = retry(
+        3,
+        fn () => DB::transaction(function () use ($request, $user, $workflow) {
+            $ticket = new Ticket($request->safe()->except('files')); // <- 2: ganti validated()
+            $ticket->user_id = $user->id;
+            $ticket->save();
 
-                $workflow->recordCreated($ticket, $user);
+            $workflow->recordCreated($ticket, $user);
 
-                return $ticket;
-            }),
-            50,
-            fn (Throwable $e) => $e instanceof UniqueConstraintViolationException,
-        );
+            return $ticket;
+        }),
+        50,
+        fn (Throwable $e) => $e instanceof UniqueConstraintViolationException,
+    );
 
-        Inertia::flash('toast', [
-            'type' => 'success',
-            'message' => __('Ticket :number created.', ['number' => $ticket->ticket_number]),
-        ]);
+    $attachments->store($ticket, $user, $request->file('files', [])); // <- 3: baris baru
 
-        return to_route('tickets.index');
-    }
+    Inertia::flash('toast', [
+        'type' => 'success',
+        'message' => __('Ticket :number created.', ['number' => $ticket->ticket_number]),
+    ]);
+
+    return to_route('tickets.index');
+}
 
     /**
      * Validasi dan bersihkan parameter daftar. Nilai yang tidak dikenal diabaikan.

@@ -6,6 +6,7 @@ use App\Enums\TicketPriority;
 use App\Models\Ticket;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Services\TicketAttachmentStorage;
 
 class StoreTicketRequest extends FormRequest
 {
@@ -42,6 +43,7 @@ class StoreTicketRequest extends FormRequest
             'title' => ['required', 'string', 'max:150'],
             'description' => ['required', 'string', 'max:5000'],
             'priority' => ['required', Rule::in(self::allowedPriorities())],
+            ...TicketAttachmentStorage::rules(required: false),
         ];
     }
 
@@ -55,6 +57,7 @@ class StoreTicketRequest extends FormRequest
             'title' => 'judul',
             'description' => 'deskripsi',
             'priority' => 'prioritas',
+            'files' => 'lampiran',
         ];
     }
 }

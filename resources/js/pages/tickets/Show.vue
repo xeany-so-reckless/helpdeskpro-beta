@@ -8,6 +8,7 @@ import TicketStatusBadge from '@/components/TicketStatusBadge.vue';
 import TicketTimeline from '@/components/TicketTimeline.vue';
 import type { TimelineEntry } from '@/components/TicketTimeline.vue';
 import { Button } from '@/components/ui/button';
+import TicketActions from '@/components/TicketActions.vue';
 import {
     Card,
     CardContent,
@@ -37,6 +38,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { formatDateTime } from '@/lib/datetime';
 import type { TicketPriority, TicketStatus } from '@/lib/ticket';
 import { index, update } from '@/routes/tickets';
+import TicketComments from '@/components/TicketComments.vue';
+import type { TicketComment } from '@/components/TicketComments.vue';
+import TicketAttachments from '@/components/TicketAttachments.vue';
+import type { TicketAttachment } from '@/components/TicketAttachments.vue';
 
 type Ticket = {
     id: number;
@@ -57,10 +62,22 @@ type Ticket = {
 };
 
 const props = defineProps<{
+    attachments: TicketAttachment[];
+    comments: TicketComment[];
     ticket: Ticket;
     timeline: TimelineEntry[];
     categories: { id: number; name: string }[];
-    can: { update: boolean };
+    can: {
+    update: boolean;
+    assign: boolean;
+    claim: boolean;
+    changePriority: boolean;
+    comment: boolean;
+    addInternalNote: boolean;
+    attach: boolean;
+    };
+    transitions: string[];
+    technicians: { id: number; name: string }[];
 }>();
 
 defineOptions({
@@ -162,6 +179,18 @@ function submitEdit() {
                         </p>
                     </CardContent>
                 </Card>
+                <TicketComments
+                    :ticket-id="ticket.id"
+                    :comments="comments"
+                    :can="can"
+                />
+
+                <TicketAttachments
+                    :ticket-id="ticket.id"
+                    :attachments="attachments"
+                    :can-attach="can.attach"
+                />
+
 
                 <Card>
                     <CardHeader>
@@ -177,6 +206,12 @@ function submitEdit() {
             </div>
 
             <div class="space-y-4">
+                <TicketActions
+                    :ticket="ticket"
+                    :can="can"
+                    :transitions="transitions"
+                    :technicians="technicians"
+                />
                 <Card>
                     <CardHeader>
                         <CardTitle>Detail</CardTitle>

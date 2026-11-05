@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import {
+    ChartColumn,
     CircleCheck,
     CirclePlus,
     ClipboardList,
@@ -10,6 +11,7 @@ import {
     Ticket,
 } from '@lucide/vue';
 import { computed } from 'vue';
+import { index as reportsIndex } from '@/routes/reports';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
@@ -44,6 +46,7 @@ const mainNavItems = computed<NavItem[]>(() => {
         items.push(
             { title: 'All Tickets', href: ticketsIndex(), icon: Ticket },
             { title: 'Categories', href: categoriesIndex(), icon: Tags },
+            { title: 'Reports', href: reportsIndex(), icon: ChartColumn },
         );
     } else if (role.value === 'it_support') {
         items.push(

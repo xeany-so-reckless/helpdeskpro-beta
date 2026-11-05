@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Enums\TicketStatus;
 use App\Models\Ticket;
+use App\Models\TicketAttachment;
 use App\Models\User;
 use App\Services\TicketWorkflow;
 
@@ -105,6 +106,57 @@ class TicketPolicy
             default => false,
         };
     }
+
+            /**
+         * Menulis komentar publik. Pelapor, teknisi yang ditugaskan, dan admin;
+         * tiket yang sudah Closed hanya bisa dibaca.
+         */
+        public function comment(User $user, Ticket $ticket): bool
+        {
+            if ($ticket->status === TicketStatus::Closed) {
+                return false;
+            }
+
+            return $user->isAdmin()
+                || $this->isRequester($user, $ticket)
+                || ($user->isItSupport() && $this->isAssignee($user, $ticket));
+        }
+
+        /** Catatan internal: hanya teknisi yang ditugaskan dan admin. Pelapor tidak. */
+        public function addInternalNote(User $user, Ticket $ticket): bool
+        {
+            if ($ticket->status === TicketStatus::Closed) {
+                return false;
+            }
+
+            return $user->isAdmin()
+                || ($user->isItSupport() && $this->isAssignee($user, $ticket));
+        }
+
+        /** Melihat catatan internal. Karyawan tidak pernah boleh, walau pelapor. */
+        public function viewInternalNotes(User $user, Ticket $ticket): bool
+        {
+            return $this->view($user, $ticket)
+                && ($user->isAdmin() || $user->isItSupport());
+        }
+
+
+    /** Mengunggah lampiran: aturan yang sama dengan menulis komentar. */
+    public function attach(User $user, Ticket $ticket): bool
+    {
+        return $this->comment($user, $ticket);
+    }
+
+    /** Menghapus lampiran: pengunggahnya atau admin; tidak pada tiket Closed. */
+    public function deleteAttachment(User $user, Ticket $ticket, TicketAttachment $attachment): bool
+    {
+        if ($ticket->status === TicketStatus::Closed) {
+            return false;
+        }
+
+        return $user->isAdmin() || (int) $attachment->uploaded_by === (int) $user->id;
+    }    
+
 
     private function isRequester(User $user, Ticket $ticket): bool
     {

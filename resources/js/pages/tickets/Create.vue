@@ -51,11 +51,22 @@ const form = useForm({
     category_id: '',
     priority: 'medium',
     description: '',
+    files: [] as File[],
 });
 
 function submit() {
-    form.post(TicketController.store.url(), { preserveScroll: true });
+    form.post(TicketController.store.url(), { preserveScroll: true, forceFormData: true });
 }
+
+function pickFiles(event: Event) {
+    form.files = Array.from((event.target as HTMLInputElement).files ?? []);
+}
+
+const fileErrors = () =>
+    Object.entries(form.errors)
+        .filter(([key]) => key === 'files' || key.startsWith('files.'))
+        .map(([, message]) => message);
+
 </script>
 
 <template>
@@ -144,6 +155,25 @@ function submit() {
                             placeholder="Apa yang terjadi, sejak kapan, dan apa yang sudah dicoba?"
                         />
                         <InputError :message="form.errors.description" />
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label for="ticket-files">Lampiran (opsional)</Label>
+                        <Input
+                            id="ticket-files"
+                            type="file"
+                            multiple
+                            accept=".png,.jpg,.jpeg,.pdf"
+                            @change="pickFiles"
+                        />
+                        <p class="text-xs text-muted-foreground">
+                            PNG, JPG, atau PDF. Maksimal 5 file, masing-masing 5 MB.
+                        </p>
+                        <InputError
+                            v-for="message in fileErrors()"
+                            :key="message"
+                            :message="message"
+                        />
                     </div>
 
                     <div class="flex items-center gap-2">

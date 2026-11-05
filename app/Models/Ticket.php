@@ -86,4 +86,14 @@ class Ticket extends Model
     {
         return $this->hasMany(TicketHistory::class)->orderBy('created_at')->orderBy('id');
     }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(TicketComment::class)->orderBy('created_at')->orderBy('id');
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(TicketAttachment::class)->orderBy('created_at')->orderBy('id');
+    }
 }

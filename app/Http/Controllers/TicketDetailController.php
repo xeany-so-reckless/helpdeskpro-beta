@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Enums\Role;
+use App\Enums\TicketStatus;
+use App\Models\User;
 
 class TicketDetailController extends Controller
 {
@@ -51,9 +54,60 @@ class TicketDetailController extends Controller
                     ->orderBy('name')
                     ->get(['id', 'name'])
                 : [],
+
+            'comments' => $ticket->comments()
+                ->visibleTo($user)
+                ->with('author:id,name,role')
+                ->get()
+                ->map(fn ($comment) => [
+                    'id' => $comment->id,
+                    'author' => $comment->author?->name,
+                    'author_role' => $comment->author?->role->value,
+                    'body' => $comment->body,
+                    'is_internal' => $comment->is_internal,
+                    'created_at' => $comment->created_at?->toISOString(),
+                ]),
+                
+            'attachments' => $ticket->attachments()
+                ->visibleTo($user)
+                ->with('uploader:id,name')
+                ->get()
+                ->map(fn ($attachment) => [
+                    'id' => $attachment->id,
+                    'name' => $attachment->original_name,
+                    'mime_type' => $attachment->mime_type,
+                    'size' => $attachment->size,
+                    'uploader' => $attachment->uploader?->name,
+                    'created_at' => $attachment->created_at?->toISOString(),
+                    'can_delete' => $user->can('deleteAttachment', [$ticket, $attachment]),
+                ]),    
+            
+
             'can' => [
                 'update' => $canUpdate,
+                'assign' => $user->can('assign', $ticket),
+                'claim' => $user->can('claim', $ticket),
+                'changePriority' => $user->can('changePriority', $ticket),
+                'comment' => $user->can('comment', $ticket),
+                'addInternalNote' => $user->can('addInternalNote', $ticket),
+                'attach' => $user->can('attach', $ticket),
             ],
+            'transitions' => collect([
+                TicketStatus::InProgress,
+                TicketStatus::Resolved,
+                TicketStatus::Closed,
+                TicketStatus::Reopened,
+            ])
+                ->filter(fn (TicketStatus $to) => $user->can('changeStatus', [$ticket, $to]))
+                ->map(fn (TicketStatus $to) => $to->value)
+                ->values(),
+            'technicians' => $user->can('assign', $ticket)
+                ? User::query()
+                    ->active()
+                    ->withRole(Role::ItSupport)
+                    ->orderBy('name')
+                    ->get(['id', 'name'])
+                : [],
         ]);
     }
 

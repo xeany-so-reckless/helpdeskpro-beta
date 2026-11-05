@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import {
     CircleCheck,
     Flame,
@@ -7,15 +7,31 @@ import {
     LoaderCircle,
     Ticket,
 } from '@lucide/vue';
+import DashboardTicketTable from '@/components/DashboardTicketTable.vue';
+import type { DashboardTicket } from '@/components/DashboardTicketTable.vue';
 import StatCard from '@/components/StatCard.vue';
+import { Button } from '@/components/ui/button';
 import {
     Card,
+    CardAction,
     CardContent,
     CardDescription,
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
 import { dashboard } from '@/routes';
+import { index } from '@/routes/tickets';
+
+defineProps<{
+    stats: {
+        assigned: number;
+        queue: number;
+        in_progress: number;
+        high_priority: number;
+        finished: number;
+    };
+    queue: DashboardTicket[];
+}>();
 
 defineOptions({
     layout: {
@@ -41,11 +57,35 @@ defineOptions({
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <StatCard title="Ditugaskan ke saya" :icon="Ticket" />
-            <StatCard title="Belum ditangani" :icon="Inbox" />
-            <StatCard title="Sedang diproses" :icon="LoaderCircle" />
-            <StatCard title="Prioritas tinggi" :icon="Flame" />
-            <StatCard title="Selesai" :icon="CircleCheck" />
+            <StatCard
+                title="Ditugaskan ke saya"
+                :value="stats.assigned"
+                description="Yang masih aktif"
+                :icon="Ticket"
+            />
+            <StatCard
+                title="Belum ditangani"
+                :value="stats.queue"
+                description="Antrean tanpa teknisi"
+                :icon="Inbox"
+            />
+            <StatCard
+                title="Sedang diproses"
+                :value="stats.in_progress"
+                :icon="LoaderCircle"
+            />
+            <StatCard
+                title="Prioritas tinggi"
+                :value="stats.high_priority"
+                description="High dan Critical milik saya"
+                :icon="Flame"
+            />
+            <StatCard
+                title="Selesai"
+                :value="stats.finished"
+                description="Resolved dan Closed"
+                :icon="CircleCheck"
+            />
         </div>
 
         <Card>
@@ -55,12 +95,20 @@ defineOptions({
                     Tiket yang menunggu penanganan, diurutkan berdasarkan
                     prioritas.
                 </CardDescription>
+                <CardAction>
+                    <Button variant="ghost" size="sm" as-child>
+                        <Link :href="index.url({ query: { scope: 'queue' } })">
+                            Lihat antrean
+                        </Link>
+                    </Button>
+                </CardAction>
             </CardHeader>
             <CardContent>
-                <p class="text-sm text-muted-foreground">
-                    Belum ada data. Antrean akan tampil setelah modul tiket
-                    selesai.
-                </p>
+                <DashboardTicketTable
+                    :tickets="queue"
+                    show-requester
+                    empty-text="Antrean kosong. Tidak ada tiket yang menunggu."
+                />
             </CardContent>
         </Card>
     </div>
