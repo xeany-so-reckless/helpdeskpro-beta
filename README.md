@@ -141,4 +141,4 @@ tests/Feature/      Pengujian Pest
 
 ## Lisensi
 
-Tentukan lisensi sesuai kebutuhan (mis. MIT) atau tambahkan catatan bahwa proyek ini privat.
+Proyek ini dilisensikan di bawah [MIT License](LICENSE).
