@@ -10,6 +10,7 @@ use App\Http\Controllers\TicketCommentController;
 use App\Http\Controllers\TicketAttachmentController;
 use Illuminate\Support\Facades\Schedule;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\UserController;
 
 Schedule::command('tickets:auto-close')->dailyAt('01:00');
 
@@ -35,6 +36,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('tickets/{ticket}/attachments/{attachment}', [TicketAttachmentController::class, 'download'])->name('tickets.attachments.download');
     Route::delete('tickets/{ticket}/attachments/{attachment}', [TicketAttachmentController::class, 'destroy'])->name('tickets.attachments.destroy');
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('users', [UserController::class, 'index'])->name('users.index');
+    Route::post('users', [UserController::class, 'store'])->name('users.store');
+    Route::patch('users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::patch('users/{user}/status', [UserController::class, 'updateStatus'])->name('users.status');
 });
 
 require __DIR__.'/settings.php';
