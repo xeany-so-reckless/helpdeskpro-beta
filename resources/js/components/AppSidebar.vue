@@ -9,6 +9,7 @@ import {
     LayoutGrid,
     Tags,
     Ticket,
+    Users,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import { index as reportsIndex } from '@/routes/reports';
@@ -28,6 +29,7 @@ import { dashboard } from '@/routes';
 import { index as categoriesIndex } from '@/routes/categories';
 import { create as ticketsCreate, index as ticketsIndex } from '@/routes/tickets';
 import type { NavItem } from '@/types';
+import { index as usersIndex } from '@/routes/users';
 
 const page = usePage();
 
@@ -47,6 +49,7 @@ const mainNavItems = computed<NavItem[]>(() => {
             { title: 'All Tickets', href: ticketsIndex(), icon: Ticket },
             { title: 'Categories', href: categoriesIndex(), icon: Tags },
             { title: 'Reports', href: reportsIndex(), icon: ChartColumn },
+            { title: 'Users', href: usersIndex(), icon: Users },
         );
     } else if (role.value === 'it_support') {
         items.push(
